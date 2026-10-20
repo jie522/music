@@ -114,6 +114,15 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
 .chip{border:1px solid var(--line);border-radius:99px;padding:8px 14px;font-size:13px;color:var(--text);background:var(--surface)}
 .chip:active{background:var(--raise)}
 
+/* source switch */
+.seg{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:4px;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:14px;width:max-content;max-width:100%}
+.seg button{padding:8px 12px;border-radius:10px;font-size:13px;font-weight:600;color:var(--muted);white-space:nowrap;transition:background .2s,color .2s}
+.seg button[aria-pressed="true"]{background:var(--raise);color:var(--text);box-shadow:inset 0 0 0 1px rgba(226,178,122,.35)}
+.view>.seg{margin-top:16px}
+.src-note{margin:0 0 16px;font-size:13px;color:var(--muted);max-width:60ch}
+.srctag{font:500 10px/1 var(--f-mono);letter-spacing:.06em;color:var(--brass);border:1px solid rgba(226,178,122,.3);border-radius:5px;padding:2px 4px;margin-right:6px;vertical-align:1px}
+.album-hint{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--muted);padding-right:4px}
+
 /* settings */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-m);padding:18px}
 .card p{margin:6px 0 0;color:var(--muted);font-size:13px}
@@ -129,7 +138,7 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
   background:rgba(33,30,41,.82);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);border:1px solid var(--line);
   box-shadow:0 12px 30px rgba(0,0,0,.4);text-align:left;transition:transform .45s var(--ease),opacity .3s}
 .mini.hide{transform:translateY(20px);opacity:0;pointer-events:none}
-.mini-thumb{width:48px;height:48px;border-radius:11px;background:var(--raise)}
+.mini-thumb{width:48px;height:48px;border-radius:11px;background:var(--raise) center/cover no-repeat}
 .mini .t{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mini .a{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .mini .ctl{display:flex;align-items:center}
@@ -156,7 +165,7 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
 .sheet-top .src b{display:block;font-size:13px;font-weight:600;max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .grabber{position:absolute;top:2px;left:50%;width:38px;height:5px;margin-left:-19px;border-radius:3px;background:rgba(242,238,232,.25)}
 .art-wrap{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;padding:16px 0}
-.art-slot{width:min(100%,46vh,360px);aspect-ratio:1;max-width:100%;border-radius:var(--r-l);box-shadow:0 30px 60px rgba(0,0,0,.5);transition:transform .5s var(--ease)}
+.art-slot{width:min(100%,46vh,360px);aspect-ratio:1;max-width:100%;border-radius:var(--r-l);background:var(--surface) center/cover no-repeat;box-shadow:0 30px 60px rgba(0,0,0,.5);transition:transform .5s var(--ease)}
 .paused .art-slot{transform:scale(.88)}
 .np-meta{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:12px}
 .np-meta h3{font:400 32px/1.08 var(--f-display);margin:0;letter-spacing:-.005em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;text-wrap:balance}
@@ -230,6 +239,11 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
     </section>
 
     <section>
+      <h2>Audius 熱門 <small>免費整首・無廣告</small></h2>
+      <div class="list" id="trend"><div class="empty">載入 Audius 本週熱門…</div></div>
+    </section>
+
+    <section>
       <h2>最近播放 <small id="recentCount"></small></h2>
       <div class="list" id="recent"></div>
     </section>
@@ -238,14 +252,20 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
   <!-- SEARCH -->
   <main class="view" id="v-search" data-view="search" hidden>
     <header class="search-head">
-      <div class="eyebrow">YouTube</div>
+      <div class="eyebrow" id="searchEyebrow">Audius</div>
       <h1>搜尋</h1>
     </header>
+    <div class="seg" role="group" aria-label="音樂來源">
+      <button type="button" data-src="audius" aria-pressed="true">Audius</button>
+      <button type="button" data-src="ia" aria-pressed="false">Internet Archive</button>
+      <button type="button" data-src="yt" aria-pressed="false">YouTube</button>
+    </div>
     <form class="field" id="searchForm" autocomplete="off">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="color:var(--muted)"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input id="searchInput" type="search" placeholder="歌名、歌手，或貼上連結" enterkeyhint="search">
     </form>
     <section id="searchBody">
+      <p class="src-note" id="srcNote"></p>
       <h2>試試看</h2>
       <div class="chips" id="chips"></div>
     </section>
@@ -275,9 +295,10 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
     <section class="card note">
       <b>關於背景播放</b>
       <ul>
+        <li><b>Audius、Internet Archive：</b>直接播放音檔，iPhone 與 Android 鎖屏或切到其他 App 都能繼續播。</li>
         <li><b>鎖定畫面控制：</b>已接上系統媒體控制，鎖定畫面與耳機按鍵可播放、暫停、切歌。</li>
-        <li><b>Android：</b>用 Chrome「安裝應用程式」加到主畫面後，切換到其他 App 時多數情況可繼續播放。</li>
-        <li><b>iPhone：</b>Safari 會在鎖屏後暫停嵌入影片，可從控制中心按播放續播。</li>
+        <li><b>YouTube／Android：</b>用 Chrome「安裝應用程式」加到主畫面後，切換到其他 App 時多數情況可繼續播放。</li>
+        <li><b>YouTube／iPhone：</b>Safari 會在鎖屏後暫停嵌入影片，可從控制中心按播放續播。</li>
         <li>YouTube 的條款要求播放器保持可見，關螢幕長時間播放最穩定的方式是 YouTube Premium。</li>
       </ul>
     </section>
@@ -344,13 +365,15 @@ h2 small{font:400 12px var(--f-mono);color:var(--muted);letter-spacing:.06em}
     <div class="list" id="qList"></div>
   </section>
 
+  <audio id="audio" preload="auto" playsinline></audio>
   <div id="player"><div class="yt-in"><div id="yt"></div></div></div>
   <div class="toast" id="toast"></div>
 </div>
 
 <script>
 /* ---------- data ---------- */
-const T = (id, title, author) => ({ id, title, author });
+// src: 'yt' (YouTube embed) | 'audius' | 'ia' (Internet Archive). Tracks without src are YouTube.
+const T = (id, title, author) => ({ src: 'yt', id, title, author });
 const PLAYLISTS = [
   { name: '深夜慢歌', desc: '關燈之後的那幾首', tracks: [
     T('YQHsXMglC9A', 'Hello', 'Adele'),
@@ -371,7 +394,20 @@ const PLAYLISTS = [
     T('OPf0YbXqDm0', 'Uptown Funk', 'Mark Ronson ft. Bruno Mars'),
   ]},
 ];
-const CHIPS = ['周杰倫', '告五人', '陳綺貞 旅行的意義', 'Taylor Swift', 'city pop', 'jazz piano', 'lofi'];
+const SOURCES = {
+  audius: { label: 'Audius', eyebrow: 'Audius · 免費整首', ph: '搜尋 Audius 上的歌曲或創作者',
+    note: '獨立創作者上傳的音樂，免費整首、沒有廣告，鎖屏也能背景播放。',
+    chips: ['lofi', 'chill', 'house', 'hip hop', 'ambient', 'piano', 'synthwave'] },
+  ia: { label: 'Internet Archive', eyebrow: 'Internet Archive · 公有領域', ph: '搜尋專輯、演出或老唱片',
+    note: '網路檔案館的公有領域錄音、現場演出與網路廠牌專輯。免費整首、沒有廣告，可背景播放。點專輯會整張播放。',
+    chips: ['jazz', 'blues', 'classical', 'Grateful Dead', '78rpm', 'bossa nova', 'ambient'] },
+  yt: { label: 'YouTube', eyebrow: 'YouTube', ph: '歌名、歌手，或貼上連結',
+    note: '主流歌曲最齊全，但可能有廣告。關鍵字搜尋需要在「收藏庫」設定金鑰；直接貼連結不需要。',
+    chips: ['周杰倫', '告五人', '陳綺貞 旅行的意義', 'Taylor Swift', 'city pop', 'jazz piano'] },
+};
+const SRC_TAG = { yt: 'YouTube', audius: 'Audius', ia: 'Archive' };
+const AUDIUS = 'https://api.audius.co/v1';
+const APP = 'app_name=nocturne';
 
 const store = {
   get(k, d) { try { const v = localStorage.getItem('nocturne:' + k); return v ? JSON.parse(v) : d; } catch { return d; } },
@@ -380,15 +416,21 @@ const store = {
 let recent = store.get('recent', []);
 let favs = store.get('favs', []);
 let apiKey = store.get('key', '');
+let source = store.get('source', 'audius');
 
-const S = { queue: [], idx: -1, playing: false, shuffle: false, repeat: 'off', dur: 0, seeking: false, ready: false, pending: null, listName: '' };
+const S = { queue: [], idx: -1, playing: false, shuffle: false, repeat: 'off', dur: 0, seeking: false, ready: false, pending: null, listName: '', engine: 'yt', token: 0 };
 
 /* ---------- helpers ---------- */
 const $ = s => document.querySelector(s);
-const thumb = (id, q = 'hqdefault') => `https://i.ytimg.com/vi/${id}/${q}.jpg`;
+const srcOf = t => t.src || 'yt';
+const key = t => srcOf(t) + ':' + t.id;
+const same = (a, b) => !!a && !!b && key(a) === key(b);
+const ytThumb = (id, q = 'hqdefault') => `https://i.ytimg.com/vi/${id}/${q}.jpg`;
+const art = (t, big) => srcOf(t) === 'yt' ? ytThumb(t.id, big ? 'hqdefault' : 'mqdefault') : (t.art || 'icon.svg');
 const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const decode = s => { const t = document.createElement('textarea'); t.innerHTML = s; return t.value; };
+const first = v => Array.isArray(v) ? v[0] : v;
 let toastT; function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2200); }
 
 const ICON = {
@@ -396,7 +438,7 @@ const ICON = {
   pause: s => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4.5" width="4" height="15" rx="1.2"/><rect x="14" y="4.5" width="4" height="15" rx="1.2"/></svg>`,
   heart: on => `<svg width="22" height="22" viewBox="0 0 24 24" fill="${on ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7.5-4.6-9.2-9.1C1.6 7.6 3.9 4.5 7.2 4.5c2 0 3.5 1.1 4.8 2.8 1.3-1.7 2.8-2.8 4.8-2.8 3.3 0 5.6 3.1 4.4 6.4C19.5 15.4 12 20 12 20Z"/></svg>`,
   repeat: m => `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l3 3-3 3"/><path d="M4 11V9a4 4 0 0 1 4-4h12M7 22l-3-3 3-3"/><path d="M20 13v2a4 4 0 0 1-4 4H4"/>${m === 'one' ? '<text x="12" y="14.5" font-size="7" text-anchor="middle" fill="currentColor" stroke="none" font-family="sans-serif" font-weight="700">1</text>' : ''}</svg>`,
-  plus: `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>`,
+  album: `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg>`,
   eq: '<span class="eq"><i></i><i></i><i></i></span>',
 };
 
@@ -413,33 +455,82 @@ function parseYT(input) {
       id = u.searchParams.get('v');
       const m = u.pathname.match(/^\/(shorts|embed|live|v)\/([\w-]{11})/);
       if (!id && m) id = m[2];
-    }
+    } else return null;
     if (id || list) return { id, list };
   } catch {}
   return null;
 }
 
+/* ---------- Audius & Internet Archive ---------- */
+const audiusTrack = t => ({ src: 'audius', id: t.id, title: t.title, author: t.user ? t.user.name : 'Audius',
+  art: t.artwork ? (t.artwork['480x480'] || t.artwork['150x150']) : '' });
+const playableAudius = t => t.is_streamable !== false && !t.is_stream_gated && (!t.access || t.access.stream) && !t.is_delete;
+
+async function audiusSearch(q) {
+  const j = await (await fetch(`${AUDIUS}/tracks/search?query=${encodeURIComponent(q)}&limit=30&${APP}`)).json();
+  return (j.data || []).filter(playableAudius).map(audiusTrack);
+}
+let trending = [];
+async function audiusTrending() {
+  if (trending.length) return trending;
+  const j = await (await fetch(`${AUDIUS}/tracks/trending?limit=20&${APP}`)).json();
+  return trending = (j.data || []).filter(playableAudius).map(audiusTrack);
+}
+async function audiusStreamUrl(id) {
+  // stream links are signed and expire, so resolve one right before playing
+  const r = await fetch(`${AUDIUS}/tracks/${encodeURIComponent(id)}/stream?no_redirect=true&${APP}`);
+  if (!r.ok) throw new Error('這首歌目前無法在 Audius 播放');
+  return (await r.json()).data;
+}
+
+const IA_COLLECTIONS = 'collection:(etree OR audio_music OR netlabels OR 78rpm OR georgeblood)';
+async function iaSearch(q) {
+  const query = `(${q}) AND mediatype:(audio) AND ${IA_COLLECTIONS}`;
+  const u = `https://archive.org/advancedsearch.php?q=${encodeURIComponent(query)}&fl[]=identifier&fl[]=title&fl[]=creator&fl[]=year&rows=30&sort[]=downloads+desc&output=json`;
+  const j = await (await fetch(u)).json();
+  return j.response.docs.map(d => ({ kind: 'album', src: 'ia', id: d.identifier, title: first(d.title) || d.identifier,
+    author: [first(d.creator), d.year].filter(Boolean).join(' · ') || 'Internet Archive', art: `https://archive.org/services/img/${d.identifier}` }));
+}
+async function iaAlbumTracks(identifier) {
+  const m = await (await fetch(`https://archive.org/metadata/${encodeURIComponent(identifier)}`)).json();
+  const files = (m.files || []).filter(f => /\.mp3$/i.test(f.name));
+  const vbr = files.filter(f => f.format === 'VBR MP3');
+  const pick = vbr.length ? vbr : files;
+  const seen = new Set();
+  const md = m.metadata || {};
+  const cover = `https://archive.org/services/img/${identifier}`;
+  return pick
+    .sort((a, b) => (parseInt(a.track) || 0) - (parseInt(b.track) || 0) || a.name.localeCompare(b.name))
+    .filter(f => { const k = (f.title || f.name).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; })
+    .map(f => ({ src: 'ia', id: identifier + '/' + f.name, title: f.title || f.name.replace(/\.mp3$/i, '').replace(/[_]+/g, ' '),
+      author: f.artist || f.creator || first(md.creator) || 'Internet Archive', art: cover, album: first(md.title) || identifier,
+      url: `https://archive.org/download/${encodeURIComponent(identifier)}/${f.name.split('/').map(encodeURIComponent).join('/')}` }));
+}
+
 /* ---------- rendering ---------- */
 function rowHTML(t, i, ctx) {
   const cur = S.queue[S.idx];
-  const on = cur && cur.id === t.id;
-  const fav = favs.some(f => f.id === t.id);
+  const on = t.kind !== 'album' && same(cur, t);
+  const fav = favs.some(f => same(f, t));
+  const tag = ctx === 'results' ? '' : `<span class="srctag">${SRC_TAG[srcOf(t)]}</span>`;
+  const side = t.kind === 'album' ? `<span class="album-hint">專輯 ${ICON.album}</span>`
+    : ctx === 'q' ? '' : `<button class="icon-btn ${fav ? 'lit' : ''}" data-fav="${ctx}:${i}" aria-label="喜愛">${ICON.heart(fav)}</button>`;
   return `<div class="row ${on ? 'on' : ''}" data-ctx="${ctx}" data-i="${i}" role="button" tabindex="0">
-    <img class="th" src="${thumb(t.id, 'mqdefault')}" alt="" loading="lazy">
-    <div class="meta"><div class="t">${esc(t.title)}</div><div class="a">${esc(t.author || 'YouTube')}</div></div>
-    <div class="side">${on && S.playing ? ICON.eq : ''}
-      ${ctx === 'q' ? '' : `<button class="icon-btn ${fav ? 'lit' : ''}" data-fav="${ctx}:${i}" aria-label="喜愛">${ICON.heart(fav)}</button>`}
-    </div></div>`;
+    <img class="th" src="${esc(art(t))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+    <div class="meta"><div class="t">${esc(t.title)}</div><div class="a">${tag}${esc(t.author || '')}</div></div>
+    <div class="side">${on && S.playing ? ICON.eq : ''}${side}</div></div>`;
 }
-const lists = { recent: () => recent, favs: () => favs, results: () => searchResults, q: () => S.queue };
 let searchResults = [];
+const lists = { recent: () => recent, favs: () => favs, results: () => searchResults, q: () => S.queue, trend: () => trending.slice(0, 6) };
+const listNames = { recent: '最近播放', favs: '喜愛的歌曲', results: '搜尋結果', trend: 'Audius 熱門' };
 
 function renderLists() {
   $('#recent').innerHTML = recent.length ? recent.map((t, i) => rowHTML(t, i, 'recent')).join('') : `<div class="empty">播過的歌會出現在這裡。先從上面的歌單挑一張，或貼一個連結。</div>`;
   $('#recentCount').textContent = recent.length ? recent.length + ' 首' : '';
   $('#favs').innerHTML = favs.length ? favs.map((t, i) => rowHTML(t, i, 'favs')).join('') : `<div class="empty">在播放畫面點愛心，歌曲就會收進這裡。</div>`;
   $('#favCount').textContent = favs.length ? favs.length + ' 首' : '';
-  $('#results').innerHTML = searchResults.map((t, i) => rowHTML(t, i, 'results')).join('');
+  if (searchResults.length) $('#results').innerHTML = searchResults.map((t, i) => rowHTML(t, i, 'results')).join('');
+  $('#trend').innerHTML = trending.length ? lists.trend().map((t, i) => rowHTML(t, i, 'trend')).join('') : $('#trend').innerHTML;
   $('#qList').innerHTML = S.queue.map((t, i) => rowHTML(t, i, 'q')).join('');
   $('#qCount').textContent = S.queue.length ? `${S.idx + 1} / ${S.queue.length}` : '';
 }
@@ -449,7 +540,7 @@ function renderShelf() {
     const ids = [...new Set(p.tracks.map(t => t.id))];
     const four = [0, 1, 2, 3].map(k => ids[k % ids.length]);
     return `<button class="pl" data-pl="${i}">
-      <div class="pl-cover"><div class="grid">${four.map(id => `<img src="${thumb(id, 'mqdefault')}" alt="" loading="lazy">`).join('')}</div><span class="count">${p.tracks.length} 首</span></div>
+      <div class="pl-cover"><div class="grid">${four.map(id => `<img src="${ytThumb(id, 'mqdefault')}" alt="" loading="lazy">`).join('')}</div><span class="count">${p.tracks.length} 首</span></div>
       <b>${esc(p.name)}</b><span>${esc(p.desc)}</span></button>`;
   }).join('');
 }
@@ -463,15 +554,20 @@ function renderNow() {
   $('#repeat').innerHTML = ICON.repeat(S.repeat); $('#repeat').classList.toggle('lit', S.repeat !== 'off');
   if (!t) return;
   $('#npTitle').textContent = $('#miniTitle').textContent = t.title;
-  $('#npArtist').textContent = $('#miniArtist').textContent = t.author || 'YouTube';
-  $('#srcName').textContent = S.listName || 'YouTube';
-  const fav = favs.some(f => f.id === t.id);
+  $('#npArtist').textContent = $('#miniArtist').textContent = t.author || SRC_TAG[srcOf(t)];
+  $('#srcName').textContent = S.listName || SRC_TAG[srcOf(t)];
+  const fav = favs.some(f => same(f, t));
   $('#npFav').innerHTML = ICON.heart(fav); $('#npFav').classList.toggle('lit', fav);
-  $('#openYT').href = 'https://www.youtube.com/watch?v=' + t.id;
-  const bg = `url(${thumb(t.id)})`;
+  const s = srcOf(t);
+  $('#openYT').href = s === 'yt' ? 'https://www.youtube.com/watch?v=' + t.id
+    : s === 'audius' ? 'https://audius.co/tracks/' + t.id
+    : 'https://archive.org/details/' + t.id.split('/')[0];
+  $('#openYT').setAttribute('aria-label', '在 ' + SOURCES[s].label + ' 開啟');
+  const bg = `url("${art(t, true)}")`;
   $('#bgart').style.backgroundImage = bg; $('#ambient').style.backgroundImage = bg;
+  $('#artSlot').style.backgroundImage = bg; $('#miniSlot').style.backgroundImage = bg;
   $('#mini').classList.remove('hide');
-  $('#player').hidden = false;
+  $('#player').hidden = S.engine !== 'yt';
 }
 
 /* ---------- player placement ---------- */
@@ -493,7 +589,7 @@ function trackPlacement(ms = 600) {
 function setSheet(open) { sheetOpen = open; $('#sheet').classList.toggle('open', open); trackPlacement(); }
 function setQueue(open) { $('#queue').classList.toggle('open', open); $('#scrim').classList.toggle('on', open); if (open) { renderLists(); const on = $('#qList .row.on'); on && on.scrollIntoView({ block: 'center' }); } }
 
-/* ---------- YouTube ---------- */
+/* ---------- engines: YouTube embed + HTML audio ---------- */
 let yt;
 window.onYouTubeIframeAPIReady = () => {
   yt = new YT.Player('yt', {
@@ -502,12 +598,14 @@ window.onYouTubeIframeAPIReady = () => {
     events: {
       onReady: () => { S.ready = true; if (S.pending) { S.pending(); S.pending = null; } },
       onStateChange: e => {
+        if (S.engine !== 'yt') return;
         if (e.data === YT.PlayerState.PLAYING) { S.playing = true; S.dur = yt.getDuration(); fillMeta(); }
         else if (e.data === YT.PlayerState.PAUSED) S.playing = false;
         else if (e.data === YT.PlayerState.ENDED) { S.playing = false; onEnded(); }
         renderNow(); renderLists(); updateSession();
       },
       onError: e => {
+        if (S.engine !== 'yt') return;
         const msg = (e.data === 101 || e.data === 150) ? '這首歌的版權方不允許外部播放，自動跳下一首' : '無法播放這支影片，自動跳下一首';
         toast(msg); setTimeout(() => next(true), 900);
       },
@@ -515,25 +613,55 @@ window.onYouTubeIframeAPIReady = () => {
   });
 };
 (function () { const s = document.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; document.head.appendChild(s); })();
-
 function whenReady(fn) { S.ready ? fn() : (S.pending = fn); }
+
+const audio = $('#audio');
+const onAudio = () => { if (S.engine !== 'audio') return; S.playing = !audio.paused; renderNow(); renderLists(); updateSession(); };
+audio.addEventListener('play', onAudio);
+audio.addEventListener('pause', onAudio);
+audio.addEventListener('ended', () => { if (S.engine === 'audio') { S.playing = false; onEnded(); } });
+audio.addEventListener('error', () => { if (S.engine === 'audio' && audio.getAttribute('src')) { toast('這首歌載入失敗，自動跳下一首'); setTimeout(() => next(true), 900); } });
+
+const E = {
+  play() { S.engine === 'yt' ? yt && yt.playVideo() : audio.play().catch(() => {}); },
+  pause() { S.engine === 'yt' ? yt && yt.pauseVideo() : audio.pause(); },
+  time() { return S.engine === 'yt' ? (yt && yt.getCurrentTime ? yt.getCurrentTime() : 0) : audio.currentTime; },
+  dur() { return S.engine === 'yt' ? (yt && yt.getDuration ? yt.getDuration() : 0) : audio.duration; },
+  seek(s) { S.engine === 'yt' ? yt && yt.seekTo(s, true) : (audio.currentTime = Math.max(0, s)); },
+};
 
 function playQueue(tracks, idx = 0, listName = '') {
   S.queue = tracks.slice(); S.listName = listName;
   playAt(idx);
 }
-function playAt(i) {
+async function playAt(i) {
   if (i < 0 || i >= S.queue.length) return;
-  S.idx = i; const t = S.queue[i];
+  S.idx = i; const t = S.queue[i]; const token = ++S.token;
+  S.engine = srcOf(t) === 'yt' ? 'yt' : 'audio';
   renderNow(); renderLists(); trackPlacement(100);
-  whenReady(() => { yt.loadVideoById(t.id); });
   addRecent(t); updateSession();
+  if (S.engine === 'yt') {
+    audio.pause(); audio.removeAttribute('src');
+    whenReady(() => { if (token === S.token) yt.loadVideoById(t.id); });
+    return;
+  }
+  if (yt && yt.pauseVideo) yt.pauseVideo();
+  try {
+    const url = srcOf(t) === 'audius' ? await audiusStreamUrl(t.id) : t.url;
+    if (token !== S.token) return;
+    audio.src = url;
+    await audio.play();
+  } catch (err) {
+    if (token !== S.token) return;
+    if (err && err.name === 'NotAllowedError') { S.playing = false; renderNow(); return; }
+    toast((err && err.message && !/play\(\)/.test(err.message)) ? err.message : '這首歌無法播放，自動跳下一首');
+    setTimeout(() => token === S.token && next(true), 900);
+  }
 }
 function playYTList(listId) {
   S.listName = 'YouTube 播放清單';
   whenReady(() => {
     yt.loadPlaylist({ list: listId, listType: 'playlist', index: 0 });
-    // pull the playlist ids once loaded so our queue / next / prev work
     let tries = 0;
     const poll = setInterval(() => {
       const ids = yt.getPlaylist && yt.getPlaylist();
@@ -546,15 +674,15 @@ function playYTList(listId) {
   });
 }
 function fillMeta() {
-  const t = S.queue[S.idx]; if (!t) return;
+  const t = S.queue[S.idx]; if (!t || srcOf(t) !== 'yt') return;
   const d = yt.getVideoData && yt.getVideoData();
   if (d && d.title && (t.title === '載入中…' || !t.author)) {
     t.title = d.title; t.author = d.author || t.author;
-    const r = recent.find(x => x.id === t.id); if (r) { r.title = t.title; r.author = t.author; store.set('recent', recent); }
+    const r = recent.find(x => same(x, t)); if (r) { r.title = t.title; r.author = t.author; store.set('recent', recent); }
     renderNow(); renderLists(); updateSession();
   }
 }
-function togglePlay() { if (!S.queue.length) { playQueue(PLAYLISTS[0].tracks, 0, PLAYLISTS[0].name); return; } S.playing ? yt.pauseVideo() : yt.playVideo(); }
+function togglePlay() { if (!S.queue.length) { playQueue(PLAYLISTS[0].tracks, 0, PLAYLISTS[0].name); return; } S.playing ? E.pause() : E.play(); }
 function nextIndex() {
   if (S.shuffle && S.queue.length > 1) { let n; do n = Math.floor(Math.random() * S.queue.length); while (n === S.idx); return n; }
   return S.idx + 1;
@@ -564,16 +692,16 @@ function next(auto) {
   if (n >= S.queue.length) { if (S.repeat === 'all' || !auto) n = 0; else return; }
   playAt(n);
 }
-function prev() { if (yt && yt.getCurrentTime() > 4) { yt.seekTo(0, true); return; } playAt(Math.max(0, S.idx - 1)); }
-function onEnded() { if (S.repeat === 'one') { yt.seekTo(0, true); yt.playVideo(); } else next(true); }
+function prev() { if (E.time() > 4) { E.seek(0); return; } playAt(Math.max(0, S.idx - 1)); }
+function onEnded() { if (S.repeat === 'one') { E.seek(0); E.play(); } else next(true); }
 
 function addRecent(t) {
-  recent = [ { ...t }, ...recent.filter(r => r.id !== t.id) ].slice(0, 30);
+  recent = [{ ...t }, ...recent.filter(r => !same(r, t))].slice(0, 30);
   store.set('recent', recent);
 }
 function toggleFav(t) {
-  const has = favs.some(f => f.id === t.id);
-  favs = has ? favs.filter(f => f.id !== t.id) : [{ ...t }, ...favs];
+  const has = favs.some(f => same(f, t));
+  favs = has ? favs.filter(f => !same(f, t)) : [{ ...t }, ...favs];
   store.set('favs', favs);
   toast(has ? '已從喜愛移除' : '已加入喜愛的歌曲');
   renderNow(); renderLists();
@@ -581,13 +709,13 @@ function toggleFav(t) {
 
 /* progress */
 setInterval(() => {
-  if (!yt || !yt.getCurrentTime || S.idx < 0) return;
-  const cur = yt.getCurrentTime() || 0, dur = yt.getDuration() || S.dur || 0;
+  if (S.idx < 0) return;
+  const cur = E.time() || 0, d = E.dur(), dur = isFinite(d) && d > 0 ? d : 0;
   const p = dur ? cur / dur : 0;
   $('#miniProg').style.width = p * 100 + '%';
   if (!S.seeking) { $('#seek').value = Math.round(p * 1000); $('#seek').style.setProperty('--p', p * 100 + '%'); $('#tCur').textContent = fmt(cur); }
-  $('#tDur').textContent = dur ? fmt(dur) : 'LIVE';
-  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur && isFinite(dur)) {
+  $('#tDur').textContent = dur ? fmt(dur) : (S.engine === 'yt' && S.playing ? 'LIVE' : '0:00');
+  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur) {
     try { navigator.mediaSession.setPositionState({ duration: dur, position: Math.min(cur, dur), playbackRate: 1 }); } catch {}
   }
 }, 250);
@@ -596,44 +724,81 @@ setInterval(() => {
 function updateSession() {
   if (!('mediaSession' in navigator)) return;
   const t = S.queue[S.idx]; if (!t) return;
-  navigator.mediaSession.metadata = new MediaMetadata({
-    title: t.title, artist: t.author || 'YouTube', album: S.listName || 'Nocturne',
-    artwork: [{ src: thumb(t.id, 'hqdefault'), sizes: '480x360', type: 'image/jpeg' }, { src: thumb(t.id, 'maxresdefault'), sizes: '1280x720', type: 'image/jpeg' }],
-  });
+  const a = srcOf(t) === 'yt'
+    ? [{ src: ytThumb(t.id, 'hqdefault'), sizes: '480x360', type: 'image/jpeg' }, { src: ytThumb(t.id, 'maxresdefault'), sizes: '1280x720', type: 'image/jpeg' }]
+    : [{ src: art(t, true), sizes: '480x480' }];
+  navigator.mediaSession.metadata = new MediaMetadata({ title: t.title, artist: t.author || SRC_TAG[srcOf(t)], album: t.album || S.listName || 'Nocturne', artwork: a });
   navigator.mediaSession.playbackState = S.playing ? 'playing' : 'paused';
   $('#bgBadge').classList.add('on');
 }
 if ('mediaSession' in navigator) {
   const h = (a, f) => { try { navigator.mediaSession.setActionHandler(a, f); } catch {} };
-  h('play', () => yt && yt.playVideo());
-  h('pause', () => yt && yt.pauseVideo());
+  h('play', () => E.play());
+  h('pause', () => E.pause());
   h('nexttrack', () => next());
   h('previoustrack', () => prev());
-  h('seekto', d => yt && yt.seekTo(d.seekTime, true));
-  h('seekbackward', d => yt && yt.seekTo(yt.getCurrentTime() - (d.seekOffset || 10), true));
-  h('seekforward', d => yt && yt.seekTo(yt.getCurrentTime() + (d.seekOffset || 10), true));
+  h('seekto', d => E.seek(d.seekTime));
+  h('seekbackward', d => E.seek(E.time() - (d.seekOffset || 10)));
+  h('seekforward', d => E.seek(E.time() + (d.seekOffset || 10)));
 }
 
 /* ---------- search ---------- */
+function setSource(s) {
+  source = s; store.set('source', s);
+  const c = SOURCES[s];
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', b.dataset.src === s));
+  $('#searchEyebrow').textContent = c.eyebrow;
+  $('#searchInput').placeholder = c.ph;
+  $('#srcNote').textContent = c.note;
+  $('#chips').innerHTML = c.chips.map(x => `<button class="chip" type="button">${esc(x)}</button>`).join('');
+  searchResults = []; $('#results').innerHTML = '';
+  const q = $('#searchInput').value.trim();
+  if (q) search(q);
+  else if (s === 'audius') showTrendingInSearch();
+}
+async function showTrendingInSearch() {
+  try {
+    const list = await audiusTrending();
+    if (source !== 'audius' || searchResults.length) return;
+    $('#results').innerHTML = `<h2>本週熱門 <small>Audius</small></h2>` + list.map((t, i) => rowHTML(t, i, 'trendAll')).join('');
+  } catch {}
+}
+lists.trendAll = () => trending;
+listNames.trendAll = 'Audius 熱門';
+
+let searchSeq = 0;
 async function search(q) {
   const parsed = parseYT(q);
   if (parsed) { handleLink(parsed); return; }
-  if (!apiKey) {
-    $('#results').innerHTML = `<div class="empty">關鍵字搜尋需要先在「收藏庫」設定 YouTube API 金鑰。<br>也可以直接在這裡貼上 YouTube 連結。</div>`;
-    return;
-  }
-  $('#results').innerHTML = `<div class="empty">搜尋「${esc(q)}」中…</div>`;
+  const seq = ++searchSeq, s = source;
+  $('#results').innerHTML = `<div class="empty">在 ${SOURCES[s].label} 搜尋「${esc(q)}」中…</div>`;
   try {
-    const u = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=20&q=${encodeURIComponent(q)}&key=${encodeURIComponent(apiKey)}`;
-    const r = await fetch(u); const j = await r.json();
-    if (j.error) throw new Error(j.error.message);
-    searchResults = j.items.map(it => T(it.id.videoId, decode(it.snippet.title), decode(it.snippet.channelTitle)));
-    $('#searchBody').hidden = true;
+    let res;
+    if (s === 'audius') res = await audiusSearch(q);
+    else if (s === 'ia') res = await iaSearch(q);
+    else {
+      if (!apiKey) { $('#results').innerHTML = `<div class="empty">YouTube 關鍵字搜尋需要先在「收藏庫」設定金鑰。<br>也可以直接貼上 YouTube 連結，或改用 Audius、Internet Archive 搜尋。</div>`; return; }
+      const u = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&videoEmbeddable=true&maxResults=20&q=${encodeURIComponent(q)}&key=${encodeURIComponent(apiKey)}`;
+      const j = await (await fetch(u)).json();
+      if (j.error) throw new Error(j.error.message);
+      res = j.items.map(it => T(it.id.videoId, decode(it.snippet.title), decode(it.snippet.channelTitle)));
+    }
+    if (seq !== searchSeq) return;
+    searchResults = res;
+    if (!res.length) { $('#results').innerHTML = `<div class="empty">${SOURCES[s].label} 上找不到「${esc(q)}」，換個關鍵字或切換來源試試。</div>`; return; }
     renderLists();
-    if (!searchResults.length) $('#results').innerHTML = `<div class="empty">找不到「${esc(q)}」，換個關鍵字試試。</div>`;
   } catch (err) {
-    $('#results').innerHTML = `<div class="empty">搜尋失敗：${esc(err.message)}<br>請確認金鑰正確，且已啟用 YouTube Data API v3。</div>`;
+    if (seq !== searchSeq) return;
+    $('#results').innerHTML = `<div class="empty">搜尋失敗：${esc(err.message || '網路連線有問題')}<br>${s === 'yt' ? '請確認金鑰正確，且已啟用 YouTube Data API v3。' : '請稍後再試一次。'}</div>`;
   }
+}
+async function openAlbum(item) {
+  toast('正在載入「' + item.title + '」');
+  try {
+    const tracks = await iaAlbumTracks(item.id);
+    if (!tracks.length) { toast('這張專輯沒有可播放的音檔'); return; }
+    playQueue(tracks, 0, item.title); setSheet(true);
+  } catch { toast('專輯載入失敗，請稍後再試'); }
 }
 function handleLink(p) {
   if (p.list && !p.id) { playYTList(p.list); toast('正在載入播放清單'); }
@@ -650,8 +815,8 @@ $('#pasteForm').addEventListener('submit', e => {
 });
 $('#searchForm').addEventListener('submit', e => { e.preventDefault(); const q = $('#searchInput').value.trim(); if (q) { $('#searchInput').blur(); search(q); } });
 $('#keyForm').addEventListener('submit', e => { e.preventDefault(); apiKey = $('#keyInput').value.trim(); store.set('key', apiKey); toast(apiKey ? '金鑰已儲存，可以用關鍵字搜尋了' : '已清除金鑰'); });
-$('#chips').innerHTML = CHIPS.map(c => `<button class="chip" type="button">${esc(c)}</button>`).join('');
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) { $('#searchInput').value = b.textContent; search(b.textContent); } });
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setSource(b.dataset.src)));
 
 $('#shelf').addEventListener('click', e => { const b = e.target.closest('.pl'); if (!b) return; const p = PLAYLISTS[b.dataset.pl]; playQueue(p.tracks, 0, p.name); setSheet(true); });
 
@@ -660,9 +825,11 @@ document.addEventListener('click', e => {
   if (f) { e.stopPropagation(); const [ctx, i] = f.dataset.fav.split(':'); toggleFav(lists[ctx]()[i]); return; }
   const row = e.target.closest('.row');
   if (row) {
-    const ctx = row.dataset.ctx, i = +row.dataset.i;
+    const ctx = row.dataset.ctx, i = +row.dataset.i, item = lists[ctx]()[i];
+    if (!item) return;
+    if (item.kind === 'album') { openAlbum(item); return; }
     if (ctx === 'q') playAt(i);
-    else { playQueue(lists[ctx](), i, { recent: '最近播放', favs: '喜愛的歌曲', results: '搜尋結果' }[ctx]); }
+    else playQueue(lists[ctx]().filter(x => x.kind !== 'album'), lists[ctx]().filter(x => x.kind !== 'album').indexOf(item), listNames[ctx]);
   }
 });
 
@@ -686,8 +853,8 @@ $('#openQueue').addEventListener('click', () => setQueue(true));
 $('#scrim').addEventListener('click', () => setQueue(false));
 
 const seek = $('#seek');
-seek.addEventListener('input', () => { S.seeking = true; const p = seek.value / 1000; seek.style.setProperty('--p', p * 100 + '%'); $('#tCur').textContent = fmt(p * (yt.getDuration() || 0)); });
-seek.addEventListener('change', () => { S.seeking = false; yt && yt.seekTo((seek.value / 1000) * (yt.getDuration() || 0), true); });
+seek.addEventListener('input', () => { S.seeking = true; const p = seek.value / 1000; seek.style.setProperty('--p', p * 100 + '%'); $('#tCur').textContent = fmt(p * (E.dur() || 0)); });
+seek.addEventListener('change', () => { S.seeking = false; E.seek((seek.value / 1000) * (E.dur() || 0)); });
 
 /* swipe down to close the sheet */
 let sy = null;
@@ -708,7 +875,8 @@ document.addEventListener('keydown', e => { if (e.code === 'Space' && !/INPUT/.t
 })();
 
 $('#player').hidden = true;
-renderShelf(); renderLists(); renderNow();
+renderShelf(); renderLists(); renderNow(); setSource(SOURCES[source] ? source : 'audius');
+audiusTrending().then(renderLists).catch(() => { $('#trend').innerHTML = `<div class="empty">Audius 熱門暫時載入不了，請稍後再試。</div>`; });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>

@@ -1,5 +1,5 @@
 // Caches the app shell so it opens instantly and is installable. YouTube media is never cached.
-const CACHE = 'nocturne-v1';
+const CACHE = 'nocturne-v2';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', e => {
